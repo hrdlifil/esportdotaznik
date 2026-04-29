@@ -10,31 +10,13 @@
 <div class="page-shell">
     <header class="hero">
         <div class="hero-copy">
-            <p class="eyebrow">Spring Boot + Thymeleaf</p>
             <h1>DESH-e dotazníky</h1>
-            <p class="hero-text">
-                Aplikace načítá otázky přímo z existující databáze naplněné přes Flyway migrace a ukládá odpovědi zpět
-                do tabulek <code>respondent</code>, <code>submission</code> a <code>answer</code>.
-            </p>
         </div>
-        <div class="hero-panel">
-            <p class="panel-kicker">Co je připravené</p>
-            <ul class="plain-list">
-                <li>Vstupní anamnestický dotazník z PDF</li>
-                <li>Denní dotazník pro 1. i 2. fázi studie</li>
-                <li>Podpora textových, číselných, single-choice i multi-choice odpovědí</li>
-            </ul>
-        </div>
+
     </header>
 
     <main class="home-grid">
         <section class="panel">
-            <div class="section-heading">
-                <p class="eyebrow">Výběr formuláře</p>
-                <h2>Vyber dotazník</h2>
-                <p>Každá karta se načítá z databáze, takže frontend neobsahuje ručně přepsané otázky.</p>
-            </div>
-
             <div class="phase-grid">
                 <a class="phase-card"
                    th:href="@{/identification}">
@@ -57,18 +39,6 @@
             </div>
         </section>
 
-        <aside class="panel panel--contrast">
-            <div class="section-heading">
-                <p class="eyebrow">Průběh vyplnění</p>
-                <h2>Jak aplikace funguje</h2>
-            </div>
-
-            <ul class="plain-list">
-                <li>Formulář se skládá podle typů otázek uložených v tabulkách <code>question</code>, <code>questionnaire_question</code> a <code>scale_option</code>.</li>
-                <li>U denního dotazníku zůstává zachované pravidlo DD5 → DD6-DD13 s automatickou odpovědí <strong>dnes jsem nehrál/a</strong>.</li>
-                <li>U vstupního dotazníku se identifikace respondenta ukládá z položky A0 jako <code>respondent.respondent_identification</code>.</li>
-            </ul>
-        </aside>
     </main>
 </div>
 </body>
