@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${questionnaire.title + ' - ' + questionnaire.badge}">DESH-e dotazník</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="page-shell">
+    <header class="hero hero--compact">
+        <div class="hero-copy">
+            <a class="ghost-link" th:href="@{/}">Zpět na přehled</a>
+            <p class="eyebrow" th:text="${questionnaire.eyebrow}">DESH-e dotazník</p>
+            <h1 th:text="${questionnaire.title}">DESH-e dotazník</h1>
+            <p class="hero-text" th:text="${questionnaire.introText}">
+                Tento formulář odpovídá dotazníku uloženému v databázi a jeho odpovědi se zapisují bez změny schématu.
+            </p>
+        </div>
+        <div class="hero-panel">
+            <p class="panel-kicker" th:text="${questionnaire.badge}">Vstupní dotazník</p>
+            <ul class="plain-list">
+                <li th:text="${questionnaire.questionCount() + ' otázek v této verzi'}">115 otázek</li>
+                <li th:text="${'Zahájeno: ' + startedAtDisplay}">Zahájeno: 1. 4. 2026 09:30</li>
+                <li th:text="${questionnaire.completionHint}">Vyplnění zabere několik minut.</li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="content-grid">
+        <section class="panel panel--form">
+            <div class="alert" th:if="${!globalErrors.isEmpty() or !questionErrors.isEmpty()}">
+                <p class="alert-title">Formulář ještě není kompletní.</p>
+                <p th:if="${!questionErrors.isEmpty()}">
+                    Zkontroluj zvyraznene otazky nize. Aktualne chybi nebo neodpovida validaci
+                    <strong th:text="${questionErrors.size()}">1</strong> polozka/polozky.
+                </p>
+                <ul class="plain-list plain-list--tight">
+                    <li th:each="error : ${globalErrors}" th:text="${error}">Vyplň všechny povinné položky.</li>
+                </ul>
+            </div>
+
+            <form class="questionnaire-form"
+                  method="post"
+                  th:action="@{/questionnaires/{questionnaireId}(questionnaireId=${questionnaire.questionnaireId})}"
+                  novalidate>
+                <input type="hidden" name="startedAt" th:value="${form.startedAt}">
+
+                <section class="intro-strip">
+                    <div th:if="${questionnaire.manualRespondentEntry}">
+                        <label class="field-label" for="respondentCode" th:text="${questionnaire.respondentFieldLabel}">Kód účastníka</label>
+                        <input class="text-input"
+                               id="respondentCode"
+                               type="text"
+                               name="respondentCode"
+                               maxlength="255"
+                               th:value="${form.respondentCode}"
+                               th:placeholder="${questionnaire.respondentFieldPlaceholder}">
+                        <p class="field-help" th:text="${questionnaire.respondentHelpText}">Datum a čas vyplnění aplikace doplní sama při odeslání.</p>
+                    </div>
+
+                    <div th:unless="${questionnaire.manualRespondentEntry}">
+                        <p class="field-label">Identifikace respondenta</p>
+                        <p class="field-help field-help--prominent" th:text="${questionnaire.respondentHelpText}">
+                            Identifikace respondenta se uloží podle odpovědi na A0.
+                        </p>
+                    </div>
+                </section>
+
+                <section class="section-block" th:each="section : ${questionnaire.sections}">
+                    <div class="section-heading">
+                        <p class="eyebrow" th:text="${section.optional ? 'Volitelný blok' : 'Sekce'}">Sekce</p>
+                        <h2 th:text="${section.title}">Část A</h2>
+                        <p th:text="${section.description}">Popis sekce</p>
+                    </div>
+
+                    <div class="question-stack">
+                        <article class="question-card"
+                                 th:each="question : ${section.questions}"
+                                 th:attr="data-question-code=${question.code},data-skippable=${question.skippableWhenNoPlay},data-question-type=${question.questionType}">
+                            <div class="question-head">
+                                <span class="question-code" th:text="${question.code}">A1</span>
+                                <p class="question-text" th:text="${question.prompt}">Text otázky</p>
+                            </div>
+
+                            <p class="field-help" th:if="${question.helperText != null}" th:text="${question.helperText}">
+                                Doplň stručnou odpověď.
+                            </p>
+
+                            <p class="question-error"
+                               th:if="${questionErrors.containsKey(question.questionnaireQuestionId)}"
+                               th:text="${questionErrors.get(question.questionnaireQuestionId)}">
+                                Vyber jednu odpověď.
+                            </p>
+
+                            <div class="options-grid" th:if="${question.singleChoice}">
+                                <label class="option-card" th:each="option : ${question.options}">
+                                    <input type="radio"
+                                           th:name="|singleChoiceAnswers[${question.questionnaireQuestionId}]|"
+                                           th:value="${option.id}"
+                                           th:checked="${form.singleChoiceAnswers[question.questionnaireQuestionId] == #strings.toString(option.id)}"
+                                           th:attr="data-option-label=${option.label},data-requires-note=${option.requiresNote},data-exclusive=${option.exclusiveChoice}">
+                                    <span class="option-copy" th:text="${option.description}">ano</span>
+                                </label>
+                            </div>
+
+                            <div class="options-grid" th:if="${question.multiChoice}">
+                                <label class="option-card" th:each="option : ${question.options}">
+                                    <input type="checkbox"
+                                           th:name="|multiChoiceAnswers[${question.questionnaireQuestionId}]|"
+                                           th:value="${option.id}"
+                                           th:checked="${form.multiChoiceAnswers[question.questionnaireQuestionId] != null and #lists.contains(form.multiChoiceAnswers[question.questionnaireQuestionId], #strings.toString(option.id))}"
+                                           th:attr="data-option-label=${option.label},data-requires-note=${option.requiresNote},data-exclusive=${option.exclusiveChoice}">
+                                    <span class="option-copy" th:text="${option.description}">jiná možnost</span>
+                                </label>
+                            </div>
+
+                            <div class="input-stack" th:if="${question.openText}">
+                                <input class="text-input"
+                                       type="text"
+                                       maxlength="255"
+                                       th:name="|textAnswers[${question.questionnaireQuestionId}]|"
+                                       th:value="${form.textAnswers[question.questionnaireQuestionId]}"
+                                       placeholder="Stručná odpověď">
+                            </div>
+
+                            <div class="input-stack input-stack--narrow" th:if="${question.numericInput}">
+                                <input class="text-input"
+                                       type="number"
+                                       min="0"
+                                       step="1"
+                                       th:name="|numericAnswers[${question.questionnaireQuestionId}]|"
+                                       th:value="${form.numericAnswers[question.questionnaireQuestionId]}"
+                                       placeholder="např. 60">
+                            </div>
+
+                            <div class="note-block" th:if="${question.noteSupported}" data-note-block>
+                                <label class="field-label" th:for="|note-${question.questionnaireQuestionId}|"
+                                       th:text="${question.noteLabel}">
+                                    Doplň upřesnění
+                                </label>
+                                <input class="text-input"
+                                       type="text"
+                                       maxlength="255"
+                                       th:id="|note-${question.questionnaireQuestionId}|"
+                                       th:name="|notes[${question.questionnaireQuestionId}]|"
+                                       th:value="${form.notes[question.questionnaireQuestionId]}"
+                                       placeholder="Vyplň jen pokud vybereš možnost, která vyžaduje doplnění.">
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <div class="submit-row">
+                    <button class="primary-button" type="submit">Uložit odpovědi</button>
+                    <p class="field-help">Odpovědi se uloží do existující databáze bez změny schématu.</p>
+                </div>
+            </form>
+        </section>
+
+        <aside class="panel side-panel">
+            <div class="section-heading">
+                <p class="eyebrow">Další dotazníky</p>
+                <h2>Přepnutí formuláře</h2>
+            </div>
+
+            <div class="phase-stack">
+                <a class="phase-link-card"
+                   th:each="questionnaireItem : ${questionnaires}"
+                   th:href="@{/questionnaires/{questionnaireId}(questionnaireId=${questionnaireItem.questionnaireId},respondentCode=${form.respondentCode})}"
+                   th:classappend="${questionnaireItem.questionnaireId == questionnaire.questionnaireId ? ' phase-link-card--active' : ''}">
+                    <span th:text="${questionnaireItem.badge}">1. fáze</span>
+                    <strong th:text="${questionnaireItem.title}">DESH-e dotazník</strong>
+                    <small th:text="${questionnaireItem.questionCount + ' otázek'}">115 otázek</small>
+                </a>
+            </div>
+
+            <div class="tip-box" th:if="${questionnaire.questionnaireId == 1}">
+                <p class="panel-kicker">Poznámka</p>
+                <p>U možností typu <strong>jiná / jiné</strong> nebo u odpovědí s textem <strong>krátce popiš</strong> doplň i textové upřesnění. Pro identifikaci respondenta se použije odpověď na A0.</p>
+            </div>
+
+            <div class="tip-box" th:if="${questionnaire.questionnaireId != 1}">
+                <p class="panel-kicker">Poznámka</p>
+                <p>Pokud dnes hráč nehrál, aplikace po volbě <strong>0 h</strong> automaticky schová otázky DD6-DD13 a přednastaví odpověď <strong>dnes jsem nehrál/a</strong>.</p>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const questionCards = Array.from(document.querySelectorAll('.question-card'));
+
+        const syncNoteVisibility = (questionCard) => {
+            const noteBlock = questionCard.querySelector('[data-note-block]');
+            if (!noteBlock) {
+                return;
+            }
+
+            const hasActiveTrigger = Array.from(
+                questionCard.querySelectorAll('input[data-requires-note="true"]:checked')
+            ).length > 0;
+
+            noteBlock.hidden = !hasActiveTrigger;
+        };
+
+        const syncNoPlayQuestions = () => {
+            const dd5Question = document.querySelector('[data-question-code="DD5"]');
+            const skippableQuestions = questionCards.filter((card) => card.dataset.skippable === 'true');
+
+            if (!dd5Question || skippableQuestions.length === 0) {
+                return;
+            }
+
+            const selected = dd5Question.querySelector('input[type="radio"]:checked');
+            const shouldCollapse = selected && selected.dataset.optionLabel === '0H';
+
+            skippableQuestions.forEach((questionCard) => {
+                questionCard.classList.toggle('is-collapsed', shouldCollapse);
+                if (shouldCollapse) {
+                    const notPlayedOption = questionCard.querySelector('input[data-option-label="NOT_PLAYED"]');
+                    if (notPlayedOption) {
+                        notPlayedOption.checked = true;
+                    }
+                }
+                syncNoteVisibility(questionCard);
+            });
+        };
+
+        questionCards.forEach((questionCard) => {
+            questionCard.addEventListener('change', (event) => {
+                const target = event.target;
+                if (target instanceof HTMLInputElement && target.type === 'checkbox') {
+                    if (target.dataset.exclusive === 'true' && target.checked) {
+                        questionCard.querySelectorAll('input[type="checkbox"]:not([data-exclusive="true"])').forEach((input) => {
+                            input.checked = false;
+                        });
+                    } else if (target.checked) {
+                        questionCard.querySelectorAll('input[type="checkbox"][data-exclusive="true"]').forEach((input) => {
+                            input.checked = false;
+                        });
+                    }
+                }
+
+                syncNoteVisibility(questionCard);
+                syncNoPlayQuestions();
+            });
+
+            syncNoteVisibility(questionCard);
+        });
+
+        syncNoPlayQuestions();
+    });
+</script>
+</body>
+</html>

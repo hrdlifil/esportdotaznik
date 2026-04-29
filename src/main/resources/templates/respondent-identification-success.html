@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identifikace vytvořena</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="page-shell page-shell--narrow">
+    <main class="panel success-panel">
+        <p class="eyebrow">Identifikace uložena</p>
+        <h1>Kód hráče je připraven.</h1>
+        <p>
+            Do tabulky <code>respondent</code> byla uložena identifikace
+            <strong th:text="${result.respondentIdentifier}">DESH-NOSCH-NON-M-2004-INT-001</strong>.
+        </p>
+
+        <div class="result-code">
+            <code th:text="${result.respondentIdentifier}">DESH-NOSCH-NON-M-2004-INT-001</code>
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-card">
+                <span>Původ</span>
+                <strong th:text="${result.schoolOriginLabel}">Ano</strong>
+                <small th:text="${result.schoolIco != null and !result.schoolIco.isBlank() ? 'IČO školy: ' + result.schoolIco : 'Bez IČO školy'}">IČO školy: 12345678</small>
+            </div>
+            <div class="detail-card">
+                <span>Příslušnost</span>
+                <strong th:text="${result.serviceMembershipLabel}">Policie</strong>
+                <small>Vybraný služební status</small>
+            </div>
+            <div class="detail-card">
+                <span>Pohlaví a rok narození</span>
+                <strong th:text="${result.sexLabel + ', ' + result.birthYear}">Muž, 2004</strong>
+                <small>Zadaná základní identifikace</small>
+            </div>
+            <div class="detail-card">
+                <span>Herní úroveň</span>
+                <strong th:text="${result.gamerLevelLabel}">Professional esport player</strong>
+                <small>Kategorie hráče</small>
+            </div>
+        </div>
+
+        <div class="success-actions success-actions--centered">
+            <a class="primary-button" th:href="@{/questionnaires/daily/1(respondentCode=${result.respondentIdentifier})}">
+                Denní dotazník 1. fáze
+            </a>
+            <a class="primary-button" th:href="@{/questionnaires/daily/2(respondentCode=${result.respondentIdentifier})}">
+                Denní dotazník 2. fáze
+            </a>
+            <a class="ghost-link ghost-link--dark" th:href="@{/identification}">Vytvořit další identifikaci</a>
+            <a class="ghost-link ghost-link--dark" th:href="@{/}">Zpět na přehled</a>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vytvořit identifikaci hráče</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="page-shell">
+    <header class="hero hero--compact">
+        <div class="hero-copy">
+            <a class="ghost-link" th:href="@{/}">Zpět na přehled</a>
+            <p class="eyebrow">Identifikace respondenta</p>
+            <h1>Vytvořit identifikaci hráče</h1>
+            <p class="hero-text">
+                Tento formulář po kliknutí uloží nového probanda do tabulky <code>respondent</code> a zároveň
+                zobrazí vytvořený identifikační kód přímo pod tlačítkem. Poslední část kódu odpovídá právě
+                uloženému <code>respondent.id</code>.
+            </p>
+        </div>
+        <div class="hero-panel">
+            <p class="panel-kicker">Co se vytvoří</p>
+            <ul class="plain-list">
+                <li>Prvních 5 číslic podle školy nebo hodnota 66666</li>
+                <li>Další číslice podle složky, pohlaví, roku narození a herní úrovně</li>
+                <li>Poslední segment je skutečně uložené id nového respondenta v databázi</li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="content-grid">
+        <section class="panel panel--form">
+            <div class="alert" th:if="${!fieldErrors.isEmpty()}">
+                <p class="alert-title">Formulář ještě není kompletní.</p>
+                <ul class="plain-list plain-list--tight">
+                    <li th:each="fieldError : ${fieldErrors.values()}" th:text="${fieldError}">Vyplň všechna pole.</li>
+                </ul>
+            </div>
+
+            <form class="questionnaire-form" method="post" th:action="@{/identification}" novalidate>
+                <div class="question-stack">
+                    <article class="question-card">
+                        <div class="question-head">
+                            <span class="question-code">Krok 1</span>
+                            <p class="question-text">Pochází proband ze školy?</p>
+                        </div>
+
+                        <p class="question-error" th:if="${fieldErrors.containsKey('fromSchool')}" th:text="${fieldErrors.get('fromSchool')}">
+                            Vyber jednu možnost.
+                        </p>
+
+                        <div class="options-grid">
+                            <label class="option-card" th:each="option : ${schoolOptions}">
+                                <input type="radio"
+                                       name="fromSchool"
+                                       th:value="${option.value}"
+                                       th:checked="${form.fromSchool == option.value}"
+                                       data-school-origin-option>
+                                <span class="option-copy">
+                                    <strong th:text="${option.label}">Ano</strong><br>
+                                    <span th:text="${option.description}">Popis volby</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="input-stack input-stack--narrow identification-subfield"
+                             data-school-ico-block
+                             th:classappend="${form.fromSchool != 'YES'} ? ' identification-subfield--hidden' : ''"
+                             th:hidden="${form.fromSchool != 'YES'}">
+                            <label class="field-label" for="schoolIco">IČO školy</label>
+                            <input class="text-input"
+                                   id="schoolIco"
+                                   type="text"
+                                   name="schoolIco"
+                                   inputmode="numeric"
+                                   maxlength="8"
+                                   th:disabled="${form.fromSchool != 'YES'}"
+                                   th:value="${form.schoolIco}"
+                                   placeholder="např. 12345678">
+                            <p class="field-help">Vyplň osmimístné IČO školy bez mezer a dalších znaků.</p>
+                            <p class="question-error" th:if="${fieldErrors.containsKey('schoolIco')}" th:text="${fieldErrors.get('schoolIco')}">
+                                Vyplň IČO školy.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="question-card">
+                        <div class="question-head">
+                            <span class="question-code">Krok 2</span>
+                            <p class="question-text">Je proband členem některé z těchto složek?</p>
+                        </div>
+
+                        <p class="question-error" th:if="${fieldErrors.containsKey('serviceMembership')}" th:text="${fieldErrors.get('serviceMembership')}">
+                            Vyber jednu možnost.
+                        </p>
+
+                        <div class="options-grid">
+                            <label class="option-card" th:each="option : ${serviceOptions}">
+                                <input type="radio"
+                                       name="serviceMembership"
+                                       th:value="${option.value}"
+                                       th:checked="${form.serviceMembership == option.value}">
+                                <span class="option-copy">
+                                    <strong th:text="${option.label}">Policie</strong><br>
+                                    <span th:text="${option.description}">Popis volby</span>
+                                </span>
+                            </label>
+                        </div>
+                    </article>
+
+                    <article class="question-card">
+                        <div class="question-head">
+                            <span class="question-code">Krok 3</span>
+                            <p class="question-text">Jaké je pohlaví probanda?</p>
+                        </div>
+
+                        <p class="question-error" th:if="${fieldErrors.containsKey('sex')}" th:text="${fieldErrors.get('sex')}">
+                            Vyber jednu možnost.
+                        </p>
+
+                        <div class="options-grid">
+                            <label class="option-card" th:each="option : ${sexOptions}">
+                                <input type="radio"
+                                       name="sex"
+                                       th:value="${option.value}"
+                                       th:checked="${form.sex == option.value}">
+                                <span class="option-copy">
+                                    <strong th:text="${option.label}">Muž</strong><br>
+                                    <span th:text="${option.description}">Popis volby</span>
+                                </span>
+                            </label>
+                        </div>
+                    </article>
+
+                    <article class="question-card">
+                        <div class="question-head">
+                            <span class="question-code">Krok 4</span>
+                            <p class="question-text">Rok narození probanda</p>
+                        </div>
+
+                        <p class="question-error" th:if="${fieldErrors.containsKey('birthYear')}" th:text="${fieldErrors.get('birthYear')}">
+                            Vyplň rok narození.
+                        </p>
+
+                        <div class="input-stack input-stack--narrow">
+                            <label class="field-label" for="birthYear">Rok narození</label>
+                            <input class="text-input"
+                                   id="birthYear"
+                                   type="number"
+                                   name="birthYear"
+                                   min="1900"
+                                   max="2100"
+                                   step="1"
+                                   th:value="${form.birthYear}"
+                                   placeholder="např. 2004">
+                        </div>
+                    </article>
+
+                    <article class="question-card">
+                        <div class="question-head">
+                            <span class="question-code">Krok 5</span>
+                            <p class="question-text">Jaká je herní úroveň probanda?</p>
+                        </div>
+
+                        <p class="question-error" th:if="${fieldErrors.containsKey('gamerLevel')}" th:text="${fieldErrors.get('gamerLevel')}">
+                            Vyber jednu možnost.
+                        </p>
+
+                        <div class="options-grid">
+                            <label class="option-card" th:each="option : ${gamerLevelOptions}">
+                                <input type="radio"
+                                       name="gamerLevel"
+                                       th:value="${option.value}"
+                                       th:checked="${form.gamerLevel == option.value}">
+                                <span class="option-copy">
+                                    <strong th:text="${option.label}">Casual gamer</strong><br>
+                                    <span th:text="${option.description}">Popis volby</span>
+                                </span>
+                            </label>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="submit-row">
+                    <button class="primary-button" type="submit">Vygenerovat identifikaci</button>
+                    <p class="field-help">Po odeslání se kód uloží do tabulky <code>respondent</code> a zároveň se zobrazí níže.</p>
+                </div>
+
+                <section class="result-preview" th:if="${result != null}">
+                    <p class="panel-kicker">Uložený kód</p>
+                    <div class="result-code">
+                        <code th:text="${result.identificationCode}">6666642022982</code>
+                    </div>
+                    <p class="field-help">
+                        Složení kódu:
+                        <strong th:text="${result.schoolSegment}">66666</strong>,
+                        <strong th:text="${result.serviceSegment}">420</strong>,
+                        <strong th:text="${result.sexSegment}">22</strong>,
+                        <strong th:text="${result.birthYearSegment}">98</strong>,
+                        <strong th:text="${result.gamerLevelSegment}">2</strong>,
+                        <strong th:text="${result.respondentIdSegment}">1</strong>
+                    </p>
+                    <p class="field-help">Poslední segment odpovídá právě uloženému <code>respondent.id</code> a je zároveň připojený na konec uloženého kódu.</p>
+                </section>
+            </form>
+        </section>
+
+        <aside class="panel side-panel">
+            <div class="section-heading">
+                <p class="eyebrow">Výstup</p>
+                <h2>Jak bude kód vypadat</h2>
+                <p>Identifikace se skládá z 5 číslic pro školu, 3 číslic pro složku, 2 číslic pro pohlaví, 2 číslic pro rok narození, 1 číslice pro herní úroveň a nakonec z id probanda z databáze.</p>
+            </div>
+
+            <div class="tip-box">
+                <p class="panel-kicker">Příklad</p>
+                <p><code>45678158110431</code></p>
+            </div>
+
+            <div class="tip-box">
+                <p class="panel-kicker">Poslední segment</p>
+                <p>Pokud je v databázi zatím nejvyšší <code>respondent.id</code> například 37, nový uložený záznam dostane <code>id = 38</code> a kód bude končit na <code>38</code>.</p>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const schoolOriginInputs = Array.from(document.querySelectorAll('[data-school-origin-option]'));
+        const schoolIcoBlock = document.querySelector('[data-school-ico-block]');
+        const schoolIcoInput = document.getElementById('schoolIco');
+
+        const syncSchoolIcoVisibility = () => {
+            if (!schoolIcoBlock) {
+                return;
+            }
+
+            const shouldShow = schoolOriginInputs.some((input) => input.checked && input.value === 'YES');
+            schoolIcoBlock.classList.toggle('identification-subfield--hidden', !shouldShow);
+            schoolIcoBlock.hidden = !shouldShow;
+            if (schoolIcoInput) {
+                schoolIcoInput.disabled = !shouldShow;
+            }
+
+            if (!shouldShow && schoolIcoInput) {
+                schoolIcoInput.value = '';
+            }
+        };
+
+        schoolOriginInputs.forEach((input) => input.addEventListener('change', syncSchoolIcoVisibility));
+        syncSchoolIcoVisibility();
+    });
+</script>
+</body>
+</html>

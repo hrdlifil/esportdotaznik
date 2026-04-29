@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odpovedi ulozeny</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="page-shell page-shell--narrow">
+    <main class="panel success-panel">
+        <p class="eyebrow">Ulozeno do databaze</p>
+        <h1>Odpovedi byly uspesne zapsany.</h1>
+        <p>
+            Submission <strong th:text="${result.submissionId}">120</strong> byl ulozen pro identifikaci
+            <strong th:text="${result.respondentIdentifier}">player@example.com</strong> v dotazniku
+            <strong th:text="${questionnaire.title}">DESH-e dotaznik</strong>.
+        </p>
+
+        <div class="success-meta">
+            <span class="meta-chip" th:text="${questionnaire.badge}">Vstupni dotaznik</span>
+            <span class="meta-chip" th:text="${submittedAtDisplay}">1. 4. 2026 10:15</span>
+            <span class="meta-chip" th:text="${result.answerCount + ' odpovedi ulozeno'}">115 odpovedi ulozeno</span>
+        </div>
+
+        <div class="success-actions">
+            <a class="primary-button"
+               th:href="@{/questionnaires/{questionnaireId}(questionnaireId=${questionnaire.questionnaireId},respondentCode=${questionnaire.manualRespondentEntry ? result.respondentIdentifier : null})}"
+               th:text="${questionnaire.repeatActionLabel}">
+                Vyplnit znovu
+            </a>
+            <a class="ghost-link ghost-link--dark" th:href="@{/}">Zpet na prehled</a>
+        </div>
+    </main>
+</div>
+</body>
+</html>
