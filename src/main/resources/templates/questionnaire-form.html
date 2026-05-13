@@ -116,12 +116,12 @@
                             </div>
 
                             <div class="input-stack" th:if="${question.openText}">
-                                <input class="text-input"
-                                       type="text"
-                                       maxlength="255"
-                                       th:name="|textAnswers[${question.questionnaireQuestionId}]|"
-                                       th:value="${form.textAnswers[question.questionnaireQuestionId]}"
-                                       placeholder="Stručná odpověď">
+                                <textarea class="text-input text-input--textarea"
+                                          rows="3"
+                                          maxlength="4000"
+                                          th:name="|textAnswers[${question.questionnaireQuestionId}]|"
+                                          th:text="${form.textAnswers[question.questionnaireQuestionId]}"
+                                          placeholder="Stručná odpověď"></textarea>
                             </div>
 
                             <div class="input-stack input-stack--narrow" th:if="${question.numericInput}">
@@ -139,13 +139,13 @@
                                        th:text="${question.noteLabel}">
                                     Doplň upřesnění
                                 </label>
-                                <input class="text-input"
-                                       type="text"
-                                       maxlength="255"
-                                       th:id="|note-${question.questionnaireQuestionId}|"
-                                       th:name="|notes[${question.questionnaireQuestionId}]|"
-                                       th:value="${form.notes[question.questionnaireQuestionId]}"
-                                       placeholder="Vyplň jen pokud vybereš možnost, která vyžaduje doplnění.">
+                                <textarea class="text-input text-input--textarea"
+                                          rows="2"
+                                          maxlength="4000"
+                                          th:id="|note-${question.questionnaireQuestionId}|"
+                                          th:name="|notes[${question.questionnaireQuestionId}]|"
+                                          th:text="${form.notes[question.questionnaireQuestionId]}"
+                                          placeholder="Vyplň jen pokud vybereš možnost, která vyžaduje doplnění."></textarea>
                             </div>
                         </article>
                     </div>
@@ -180,7 +180,12 @@
                 <p>U možností typu <strong>jiná / jiné</strong> nebo u odpovědí s textem <strong>krátce popiš</strong> doplň i textové upřesnění. Pro identifikaci respondenta se použije odpověď na A0.</p>
             </div>
 
-            <div class="tip-box" th:if="${questionnaire.questionnaireId != 1}">
+            <div class="tip-box" th:if="${questionnaire.questionnaireId == 40}">
+                <p class="panel-kicker">Poznámka</p>
+                <p>Pro identifikaci respondenta se použije odpověď na <strong>A0</strong>. U odpovědí typu <strong>ano - popiš/doplňte</strong> doplň i textové upřesnění.</p>
+            </div>
+
+            <div class="tip-box" th:if="${questionnaire.questionnaireId == 2 or questionnaire.questionnaireId == 3}">
                 <p class="panel-kicker">Poznámka</p>
                 <p>Pokud dnes hráč nehrál, aplikace po volbě <strong>0 h</strong> automaticky schová otázky DD6-DD13 a přednastaví odpověď <strong>dnes jsem nehrál/a</strong>.</p>
             </div>

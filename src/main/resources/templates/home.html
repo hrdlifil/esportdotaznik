@@ -29,6 +29,7 @@
 
                 <a class="phase-card"
                    th:each="questionnaire : ${questionnaires}"
+                   th:if="${questionnaire.questionnaireId != 4}"
                    th:href="@{/questionnaires/{questionnaireId}(questionnaireId=${questionnaire.questionnaireId})}">
                     <p class="phase-badge" th:text="${questionnaire.badge}">Vstupní dotazník</p>
                     <h3 th:text="${questionnaire.title}">DESH-e dotazník</h3>

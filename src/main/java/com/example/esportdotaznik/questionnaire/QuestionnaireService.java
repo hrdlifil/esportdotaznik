@@ -24,7 +24,9 @@ import java.util.regex.Pattern;
 @Service
 public class QuestionnaireService {
 
+    private static final long ATHLETE_QUESTIONNAIRE_ID = 40L;
     private static final Pattern QUESTION_CODE_PATTERN = Pattern.compile("^([A-Z]{1,2}\\d+[a-z]?)\\.\\s*(.+)$");
+    private static final int TEXT_ANSWER_MAX_LENGTH = 4000;
     private static final Set<String> SKIPPABLE_WHEN_NOT_PLAYED = Set.of("DD6", "DD7", "DD8", "DD9", "DD10", "DD11", "DD12", "DD13");
     private static final List<String> AUTO_SKIP_OPTION_LABELS = List.of("NOT_PLAYED", "NOT_APPLICABLE");
     private static final Map<String, SectionMeta> INITIAL_SECTION_RULES = Map.ofEntries(
@@ -36,6 +38,14 @@ public class QuestionnaireService {
         Map.entry("F", new SectionMeta("environment", "Část F - Ergonomie herního prostředí", "Židle, stůl, monitor a pracovní návyky během session.", false)),
         Map.entry("G", new SectionMeta("musculoskeletal", "Část G - Muskuloskeletální obtíže a jejich dopad", "Bolestivost a únava horních končetin, zad a hlavy při hraní.", false)),
         Map.entry("H", new SectionMeta("sleep", "Část H - Spánek a režim", "Spánková pravidelnost, rušivé vlivy a večerní návyky.", false))
+    );
+    private static final Map<String, SectionMeta> ATHLETE_SECTION_RULES = Map.ofEntries(
+        Map.entry("A", new SectionMeta("identification", "Část A - Identifikační údaje", "Identifikační kód, kontakt a sportovní zázemí sportovce.", false)),
+        Map.entry("B", new SectionMeta("personal-history", "Část B - Osobní anamnéza sportovce", "Prodělaná onemocnění, současné obtíže, léky, úrazy a další osobní zdravotní údaje.", false)),
+        Map.entry("C", new SectionMeta("family-history", "Část C - Rodinná anamnéza sportovce", "Výskyt vybraných chorob v rodině a doplnění, u koho se vyskytly.", false)),
+        Map.entry("D", new SectionMeta("sport-history", "Část D - Sportovní anamnéza", "Hlavní a doplňkové sporty, trénink, výsledky, regenerace a kompenzace.", false)),
+        Map.entry("E", new SectionMeta("social-history", "Část E - Sociální anamnéza", "Práce nebo škola, návykové látky, doplňky, spánek, strava a lékař.", false)),
+        Map.entry("F", new SectionMeta("declaration", "Část F - Prohlášení", "Souhlas s předáváním vybraných výsledků a zdravotních informací.", false))
     );
     private static final List<NumericSectionMeta> DAILY_SECTION_RULES = List.of(
         new NumericSectionMeta("sleep", "Část A - Spánek a stimulanty", "Spánek z minulé noci a dnešní stimulanty.", 1, 4, false),
@@ -89,6 +99,21 @@ public class QuestionnaireService {
             null,
             null,
             "Vyplnit další denní záznam"
+        ),
+        ATHLETE_QUESTIONNAIRE_ID,
+        new QuestionnaireProfile(
+            "Anamnéza sportovce",
+            "Anamnestický dotazník pro sportovce podle formuláře FTVS.",
+            "FTVS anamnestický dotazník",
+            "Tento formulář odpovídá anamnestickému dotazníku pro sportovce a ukládá odpovědi přímo do databáze.",
+            "Vyplň identifikační kód a všechny povinné položky.",
+            false,
+            null,
+            null,
+            "Identifikace respondenta se uloží podle odpovědi na položku A0.",
+            "A0",
+            null,
+            "Vyplnit nový anamnestický formulář"
         )
     );
 
@@ -164,7 +189,7 @@ public class QuestionnaireService {
                 accumulator.code(),
                 accumulator.prompt(),
                 accumulator.questionType(),
-                helperTextForQuestion(accumulator.code(), accumulator.questionType()),
+                helperTextForQuestion(firstRow.questionnaireId(), accumulator.code(), accumulator.questionType()),
                 accumulator.options().stream().anyMatch(ScaleOptionView::requiresNote),
                 noteLabelForQuestion(accumulator.code()),
                 accumulator.skippableWhenNoPlay(),
@@ -288,8 +313,8 @@ public class QuestionnaireService {
             return;
         }
 
-        if (value.length() > 255) {
-            questionErrors.put(question.questionnaireQuestionId(), "Textová odpověď může mít maximálně 255 znaků.");
+        if (value.length() > TEXT_ANSWER_MAX_LENGTH) {
+            questionErrors.put(question.questionnaireQuestionId(), "Textová odpověď může mít maximálně " + TEXT_ANSWER_MAX_LENGTH + " znaků.");
             return;
         }
 
@@ -519,8 +544,8 @@ public class QuestionnaireService {
             return null;
         }
 
-        if (note.length() > 255) {
-            questionErrors.put(question.questionnaireQuestionId(), "Textové upřesnění může mít maximálně 255 znaků.");
+        if (note.length() > TEXT_ANSWER_MAX_LENGTH) {
+            questionErrors.put(question.questionnaireQuestionId(), "Textové upřesnění může mít maximálně " + TEXT_ANSWER_MAX_LENGTH + " znaků.");
             return null;
         }
 
@@ -545,9 +570,12 @@ public class QuestionnaireService {
                 .orElseThrow(() -> new IllegalStateException("No daily section configured for question code " + questionCode));
         }
 
-        SectionMeta section = INITIAL_SECTION_RULES.get(questionCode.substring(0, 1));
+        Map<String, SectionMeta> sectionRules = isAthleteQuestionnaire(questionnaireId)
+            ? ATHLETE_SECTION_RULES
+            : INITIAL_SECTION_RULES;
+        SectionMeta section = sectionRules.get(questionCode.substring(0, 1));
         if (section == null) {
-            throw new IllegalStateException("No initial questionnaire section configured for question code " + questionCode);
+            throw new IllegalStateException("No section configured for questionnaire " + questionnaireId + " and question code " + questionCode);
         }
         return section;
     }
@@ -581,9 +609,13 @@ public class QuestionnaireService {
         return "Doplň upřesnění";
     }
 
-    private String helperTextForQuestion(String questionCode, String questionType) {
-        if ("A7".equals(questionCode)) {
+    private String helperTextForQuestion(long questionnaireId, String questionCode, String questionType) {
+        if (questionnaireId == 1L && "A7".equals(questionCode)) {
             return "Vyplnit jen pokud jsi v A6 odpovedel/a ano.";
+        }
+
+        if (isAthleteQuestionnaire(questionnaireId) && "A0".equals(questionCode)) {
+            return "Tento kód se uloží jako identifikace respondenta.";
         }
 
         return switch (questionType) {
@@ -616,6 +648,10 @@ public class QuestionnaireService {
 
     private boolean isDailyQuestionnaire(long questionnaireId) {
         return questionnaireId == 2L || questionnaireId == 3L;
+    }
+
+    private boolean isAthleteQuestionnaire(long questionnaireId) {
+        return questionnaireId == ATHLETE_QUESTIONNAIRE_ID;
     }
 
     private String normalizeText(String rawValue) {
