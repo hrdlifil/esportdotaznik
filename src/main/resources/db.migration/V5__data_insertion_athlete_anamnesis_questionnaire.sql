@@ -1,4 +1,4 @@
-﻿-- FTVS - anamnestický dotazník pro sportovce
+-- FTVS - anamnestický dotazník pro sportovce
 -- Source: 4_EK_FTVS_A_anamnesticky dotaznik sportovce_OPTAK_final.pdf
 -- Notes:
 -- 1) The PDF fields completed by a doctor and handwritten signature blocks are not modeled here.

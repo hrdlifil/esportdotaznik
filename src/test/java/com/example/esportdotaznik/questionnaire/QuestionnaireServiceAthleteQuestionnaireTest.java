@@ -1,4 +1,4 @@
-﻿package com.example.esportdotaznik.questionnaire;
+package com.example.esportdotaznik.questionnaire;
 
 import org.junit.jupiter.api.Test;
 
